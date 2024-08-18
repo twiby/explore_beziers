@@ -1,0 +1,245 @@
+#!/usr/bin/env python
+
+import sys
+import copy
+import numpy as np
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+from matplotlib.widgets import Slider
+
+from arc import Arc
+from bezier import Bezier
+from point import Point
+from utils import set_current_subplot
+from constants import *
+
+
+class BezierCurveApproximation:
+	def __init__(self, bez):
+		self.original_bezier = bez.copy()
+		self.current_bezier = bez.copy()
+		self.t = 0
+		self.arcs = []
+
+	def compute(self, eps):
+		'''shouldn't be reused after this call, this should be consumed'''
+		print("COMPUTING", eps)
+		counter = 0 
+		while self.t < 1:
+			counter += 1
+			if counter > MAX_NB_ARCS:
+				print("MAX NB OF ARCS REACHED")
+				return self.arcs
+				# raise ValueError("MAX ITERATION REACHED")
+
+			arc, t = self.current_bezier.approximate_beginning_with_arc(eps)
+			self.arcs.append(arc)
+			self.t = t + self.t * (1-t)
+			self.current_bezier = Bezier(*self.original_bezier.reverse().get_sub_bez_points(1-self.t)).reverse()
+
+		return self.arcs
+
+
+def splitting_interface(beziers):
+	fig, axs = plt.subplots(2, 2)
+	axs = axs.flatten()
+	fig.subplots_adjust(bottom=0.25)
+	ax_slider = fig.add_axes([0.15, 0.1, 0.75, 0.03])
+	slider = Slider(
+	    ax = ax_slider,
+	    label = 'Cutting point',
+	    valmin = 0.0,
+	    valmax = 1.0,
+	    valinit = INIT_CUTOFF,
+	)
+
+	for n in range(len(beziers)):
+		beziers[n].set_fig(fig, axs[n])
+
+	pre_beziers = []
+	post_beziers = []
+
+	for n in range(len(beziers)):
+		b = beziers[n]
+		(pre_points, post_points) = b.split_at(INIT_CUTOFF)
+		pre_beziers.append(Bezier(*pre_points, fig, axs[n]))
+		post_beziers.append(Bezier(*post_points, fig, axs[n]))
+
+		b.print(linewidth = 1.3)
+		pre_beziers[-1].print(marker="x", pointcolor="orange", linecolor="orange")
+		post_beziers[-1].print(marker="x", pointcolor="green", linecolor="green")
+
+	def update(val):
+		for n in range(len(beziers)):
+			b = beziers[n]
+			(pre_points, post_points) = b.split_at(val)
+			pre_beziers[n].set_points(*pre_points)
+			pre_beziers[n].print()
+			post_beziers[n].set_points(*post_points)
+			post_beziers[n].print()
+		fig.canvas.draw_idle()
+	slider.on_changed(update)
+	plt.show()
+
+def double_split_interface(beziers):
+	fig, axs = plt.subplots(2, 2)
+	axs = axs.flatten()
+	fig.subplots_adjust(bottom=0.25)
+	ax_slider = fig.add_axes([0.15, 0.1, 0.75, 0.03])
+	slider_bot = Slider(
+	    ax = ax_slider,
+	    label = 'Bottom cut',
+	    valmin = 0.0,
+	    valmax = 0.5,
+	    valinit = INIT_BOT,
+	)
+	ax_slider = fig.add_axes([0.15, 0.13, 0.75, 0.03])
+	slider_top = Slider(
+	    ax = ax_slider,
+	    label = 'Top cut',
+	    valmin = 0.5,
+	    valmax = 1.0,
+	    valinit = INIT_TOP,
+	)
+
+	cut = [INIT_BOT, INIT_TOP]
+	cut_beziers = []
+	for n in range(len(beziers)):
+		b = beziers[n]
+		b.set_fig(fig, axs[n])
+		b.print(linewidth = 1.3)
+		cut_points = b.split_at_both(*cut)
+		cut_beziers.append(Bezier(*cut_points, fig, axs[n]))
+		cut_beziers[-1].print(marker = "x", pointcolor = "orange", linecolor = "orange")
+
+	def update():
+		for n in range(len(beziers)):
+			b = beziers[n]
+			cut_points = b.split_at_both(*cut)
+			cut_beziers[n].set_points(*cut_points)
+			cut_beziers[n].print()
+		fig.canvas.draw_idle()
+	def update_bot(val):
+		cut[0] = val
+		update()
+	def update_top(val):
+		cut[1] = val
+		update()
+
+	slider_top.on_changed(update_top)
+	slider_bot.on_changed(update_bot)
+
+	plt.show()
+
+def approximate_with_curves(beziers):
+	fig, axs = plt.subplots(2, 2)
+	fig.suptitle("Beziers curves approximation with circular arcs")
+	axs = axs.flatten()
+	fig.subplots_adjust(bottom=0.25)
+	ax_slider = fig.add_axes([0.15, 0.1, 0.75, 0.03])
+	log_init_eps = (np.log(MIN_EPS) + np.log(MAX_EPS)) / 2
+	init_eps = np.exp(log_init_eps)
+	slider = Slider(
+	    ax = ax_slider,
+	    label = 'log(precision)',
+	    valmin = np.log(MIN_EPS),
+	    valmax = np.log(MAX_EPS),
+	    valinit = log_init_eps,
+	)
+
+	all_arcs = []
+	for n in range(len(beziers)):
+		axs[n].axis('equal')
+		beziers[n].set_fig(fig, axs[n])
+		beziers[n].print(linewidth = 1.3)
+
+		approximator = BezierCurveApproximation(beziers[n])
+		arcs = approximator.compute(init_eps)
+		for arc in arcs:
+			arc.set_fig(fig, axs[n])
+			arc.print(linecolor="orange", marker="x", pointcolor="orange")
+		all_arcs.append(arcs)
+
+	def update(val):
+		eps = np.exp(val)
+		if eps <= 0:
+			return
+		for n in range(len(beziers)):
+			set_current_subplot(beziers[n].f, beziers[n].ax)
+			for arc in all_arcs[n]:
+				arc.printed_line.remove()
+				arc.printed_points.remove()
+			approximator = BezierCurveApproximation(beziers[n])
+			arcs = approximator.compute(eps)
+			for arc in arcs:
+				arc.set_fig(fig, axs[n])
+				arc.print(linecolor="orange", marker="x", pointcolor="orange")
+			all_arcs[n] = arcs
+		fig.canvas.draw_idle()
+	slider.on_changed(update)
+
+	plt.show(block = True)
+
+def nb_approximation(beziers):
+	fig, axs = plt.subplots(2, 2)
+	fig.suptitle("Number of arcs needed to approximate the Beziers curves")
+	axs = axs.flatten()
+
+	log_min_eps = np.log(MIN_EPS)
+	log_max_eps = np.log(MAX_EPS)
+	log_x = np.array([log_min_eps + n*(log_max_eps - log_min_eps)/(NB_EPS-1) for n in range(NB_EPS)])
+	x = np.exp(log_x)
+
+	for n in range(len(beziers)):
+		print("BEZIER", n)
+		set_current_subplot(fig, axs[n])
+		y = np.array([len(BezierCurveApproximation(beziers[n]).compute(eps)) for eps in x])
+
+		log_y = np.log(y)
+		poly = np.polynomial.polynomial.Polynomial.fit(log_x, log_y, 1)
+		log_y2 = poly(log_x)
+
+		plt.plot(x, y, label = "nb of arcs")
+		plt.plot(x, np.exp(log_y2), color = "red", alpha = 0.4, label = "fit degree: " + str(abs(poly.coef[1])))
+		plt.xscale("log")
+		plt.yscale("log")
+		plt.ylabel("Number of arcs generated")
+		plt.xlabel("Precision asked")
+		plt.legend()
+
+	plt.show(block = False)
+
+
+if __name__ == "__main__":
+	beziers = [
+		Bezier(
+			Point(0, 0), 
+			Point(0, 1), 
+			Point(2, 1), 
+			Point(2, 0), 
+		),
+		Bezier(
+			Point(0, 0), 
+			Point(1, 0), 
+			Point(2, 0), 
+			Point(3, 0), 
+		),
+		Bezier(
+			Point(0, 0), 
+			Point(2, 1), 
+			Point(0, 1), 
+			Point(2, 0), 
+		),
+		Bezier(
+			Point(0, 0), 
+			Point(2.5, 1), 
+			Point(-0.5, 1), 
+			Point(2, 0), 
+		),
+	]
+
+	# splitting_interface(beziers)
+	# double_split_interface(beziers)
+
+	nb_approximation(beziers)
+	approximate_with_curves(beziers)
