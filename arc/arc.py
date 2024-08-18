@@ -32,7 +32,7 @@ class Arc(PrintableArc):
 		'''https://web.archive.org/web/20161011113446/http://www.abecedarical.com/zenosamples/zs_circle3pts.html'''
 		from numpy.linalg import det, norm
 
-		if colinears(self.points[0], self.points[1], self.points[2], EPS_ARC):
+		if colinears(self.points[0], self.points[1], self.points[2]):
 			self.degenerate = True
 			self.center = None
 			self.radius = None
@@ -89,7 +89,7 @@ class Arc(PrintableArc):
 
 	def point_on_arc(self, p, eps):
 		if self.degenerate:
-			return colinears(self.points[0], p, self.points[2], eps)
+			return point_on_line(self.points[0], p, self.points[2], eps)
 
 		vec = p - self.center
 		radius_diff = abs(vec.norm() - self.radius)
@@ -111,5 +111,12 @@ class Arc(PrintableArc):
 		+ str(self.points[2]) + ", "\
 		+ ")"
 
-def colinears(p1, p2, p3, eps):
-	return abs(0.5 * (p1.x * (p2.y - p3.y) + p2.x * (p3.y - p1.y) + p3.x * (p1.y - p2.y))) < eps * eps
+def area(p1, p2, p3):
+	return abs(0.5 * (p1.x * (p2.y - p3.y) + p2.x * (p3.y - p1.y) + p3.x * (p1.y - p2.y)))
+
+def colinears(p1, p2, p3):
+	return point_on_line(p1, p2, p3, MIN_EPS)
+
+def point_on_line(p1, p, p2, eps):
+	height = 2 * area(p1, p2, p) / (p2 - p1).norm()
+	return height < eps
