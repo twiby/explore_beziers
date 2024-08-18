@@ -25,6 +25,9 @@ class Arc(PrintableArc):
 		self.points = [p0, p1, p2]
 		self.init_center()
 
+	def chord(self):
+		return (self.points[2] - self.points[0]).norm()
+
 	def init_center(self):
 		'''https://web.archive.org/web/20161011113446/http://www.abecedarical.com/zenosamples/zs_circle3pts.html'''
 		from numpy.linalg import det, norm
@@ -100,6 +103,13 @@ class Arc(PrintableArc):
 		while angle < theta_start:
 			angle += 2*np.pi
 		return angle >= theta_start and angle <= theta_end
+
+	def __repr__(self):
+		return "Arc(" \
+		+ str(self.points[0]) + ", "\
+		+ str(self.points[1]) + ", "\
+		+ str(self.points[2]) + ", "\
+		+ ")"
 
 def colinears(p1, p2, p3, eps):
 	return abs(0.5 * (p1.x * (p2.y - p3.y) + p2.x * (p3.y - p1.y) + p3.x * (p1.y - p2.y))) < eps * eps

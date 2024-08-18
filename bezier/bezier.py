@@ -127,3 +127,11 @@ class Bezier(PrintableBezier):
 
 	def copy(self):
 		return Bezier(*self.points)
+
+	def __repr__(self):
+		return "Bezier(" \
+		+ str(self.points[0]) + ", "\
+		+ str(self.points[1]) + ", "\
+		+ str(self.points[2]) + ", "\
+		+ str(self.points[3]) + ", "\
+		+ ")"
