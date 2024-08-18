@@ -76,6 +76,7 @@ class Bezier(PrintableBezier):
 		return post_points.reverse()
 
 	def test_arc(self, arc, max_t, eps):
+		'''tests whether points up until max_t are not farther away from arc than eps'''
 		eps_t = max_t / 1000
 		p = self.sample(eps_t)
 		if not arc.point_on_arc(p, eps):
@@ -92,6 +93,8 @@ class Bezier(PrintableBezier):
 		return True
 
 	def approximate_beginning_with_arc(self, eps):
+		'''tries to approximate the beginning of the curve with an arc. Returns 
+		 the arc and t value corresponding to the part that was approximated'''
 		t = 1
 		step = 1
 
