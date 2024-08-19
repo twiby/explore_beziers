@@ -56,11 +56,9 @@ class PrintableArc:
 			y = [self.points[0].y, self.points[2].y]
 
 		else:
-			theta_start, theta_end = self.angle_parameters()
-			theta_tot = theta_end - theta_start
-
-			x = self.center.x + np.array([self.radius * np.cos(theta_start + t * theta_tot / (SAMPLING-1)) for t in range(SAMPLING)])
-			y = self.center.y + np.array([self.radius * np.sin(theta_start + t * theta_tot / (SAMPLING-1)) for t in range(SAMPLING)])
+			theta_tot = self.theta_end - self.theta_start
+			x = self.center.x + np.array([self.radius * np.cos(self.theta_start + t * theta_tot / (SAMPLING-1)) for t in range(SAMPLING)])
+			y = self.center.y + np.array([self.radius * np.sin(self.theta_start + t * theta_tot / (SAMPLING-1)) for t in range(SAMPLING)])
 
 		if self.printed_line is None:
 			self.printed_line, = plt.plot(

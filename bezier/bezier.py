@@ -125,7 +125,6 @@ class Bezier(PrintableBezier):
 			arc = Arc(self.points[0], self.sample(t/2), self.sample(t))
 			arc_is_good = self.test_arc(arc, t, eps)
 			
-		prev_arc.set_fig(self.f, self.ax)
 		return prev_arc, t-step
 
 	def copy(self):
