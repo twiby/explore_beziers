@@ -30,43 +30,41 @@ class Arc(PrintableArc):
 
 	def init_center(self):
 		'''https://web.archive.org/web/20161011113446/http://www.abecedarical.com/zenosamples/zs_circle3pts.html'''
-		from numpy.linalg import det, norm
-
 		if colinears(self.points[0], self.points[1], self.points[2]):
 			self.degenerate = True
 			self.center = None
 			self.radius = None
 			return
 
-		m_11 = np.array([
-			[self.points[0].x, self.points[0].y, 1],
-			[self.points[1].x, self.points[1].y, 1],
-			[self.points[2].x, self.points[2].y, 1],
-		])
+		m_11 = determinant_3x3_last_column_ones(np.array([
+			[self.points[0].x, self.points[0].y],
+			[self.points[1].x, self.points[1].y],
+			[self.points[2].x, self.points[2].y],
+		]))
 
-		m_12 = np.array([
-			[self.points[0].x**2 + self.points[0].y**2, self.points[0].y, 1],
-			[self.points[1].x**2 + self.points[1].y**2, self.points[1].y, 1],
-			[self.points[2].x**2 + self.points[2].y**2, self.points[2].y, 1],
-		])
+		m_12 = determinant_3x3_last_column_ones(np.array([
+			[self.points[0].x**2 + self.points[0].y**2, self.points[0].y],
+			[self.points[1].x**2 + self.points[1].y**2, self.points[1].y],
+			[self.points[2].x**2 + self.points[2].y**2, self.points[2].y],
+		]))
 
-		m_13 = np.array([
-			[self.points[0].x**2 + self.points[0].y**2, self.points[0].x, 1],
-			[self.points[1].x**2 + self.points[1].y**2, self.points[1].x, 1],
-			[self.points[2].x**2 + self.points[2].y**2, self.points[2].x, 1],
-		])
+		m_13 = determinant_3x3_last_column_ones(np.array([
+			[self.points[0].x**2 + self.points[0].y**2, self.points[0].x],
+			[self.points[1].x**2 + self.points[1].y**2, self.points[1].x],
+			[self.points[2].x**2 + self.points[2].y**2, self.points[2].x],
+		]))
 
-		m_14 = np.array([
+		m_14 = determinant_3x3(np.array([
 			[self.points[0].x**2 + self.points[0].y**2, self.points[0].x, self.points[0].y],
 			[self.points[1].x**2 + self.points[1].y**2, self.points[1].x, self.points[1].y],
 			[self.points[2].x**2 + self.points[2].y**2, self.points[2].x, self.points[2].y],
-		])
+		]))
 		
 		try:
-			x = 0.5 * det(m_12) / det(m_11)
-			y = -0.5 * det(m_13) / det(m_11)
+			x = 0.5 * m_12 / m_11
+			y = -0.5 * m_13 / m_11
 			self.center = Point(x, y)
-			self.radius = np.sqrt(x**2 + y**2 + det(m_14)/det(m_11))
+			self.radius = np.sqrt(x**2 + y**2 + m_14/m_11)
 		except:
 			self.degenerate = True
 			self.center = None
@@ -121,3 +119,19 @@ def colinears(p1, p2, p3):
 def point_on_line(p1, p, p2, eps):
 	height = 2 * area(p1, p2, p) / (p2 - p1).norm()
 	return height < eps
+
+def determinant_3x3(x):
+	if x.shape != (3, 3):
+		raise ValueError
+
+	return x[0, 0] * (x[1, 1] * x[2, 2] - x[1, 2] * x[2, 1]) -\
+		x[0, 1] * (x[1, 0] * x[2, 2] - x[1, 2] * x[2, 0]) +\
+		x[0, 2] * (x[1, 0] * x[2, 1] - x[1, 1] * x[2, 0])
+
+def determinant_3x3_last_column_ones(x):
+	if x.shape != (3, 2):
+		raise ValueError
+
+	return x[0, 0] * (x[1, 1] - x[2, 1]) -\
+		x[0, 1] * (x[1, 0] -  x[2, 0]) +\
+		(x[1, 0] * x[2, 1] - x[1, 1] * x[2, 0])
