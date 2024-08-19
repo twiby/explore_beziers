@@ -25,14 +25,15 @@ class Arc(PrintableArc):
 		self.points = [p0, p1, p2]
 		self.init()
 
-	def init(self):
-		self.init_center()
-		self.init_angles()
-
 	def chord(self):
 		return (self.points[2] - self.points[0]).norm()
 
-	def init_center(self):
+	def is_more_than_half_circle(self):
+		v1 = self.points[1] - self.points[0]
+		v2 = self.points[2] - self.points[1]
+		return v1.dot(v2) < 0
+
+	def init(self):
 		'''https://web.archive.org/web/20161011113446/http://www.abecedarical.com/zenosamples/zs_circle3pts.html'''
 		if colinears(self.points[0], self.points[1], self.points[2]):
 			self.degenerate = True
@@ -74,7 +75,8 @@ class Arc(PrintableArc):
 			self.center = None
 			self.radius = None
 
-	def init_angles(self):
+	def get_angles(self):
+		'''costly, do not use in main loop'''
 		if self.degenerate:
 			self.theta_start = None
 			self.theta_end = None
@@ -104,9 +106,7 @@ class Arc(PrintableArc):
 		assert(theta_end < theta_start + 2*np.pi)
 		assert(theta_mid > theta_start)
 		assert(theta_mid < theta_end)
-		self.theta_start = theta_start
-		self.theta_end = theta_end
-		self.theta_mid = theta_mid
+		return theta_start, theta_end
 
 	def point_on_arc(self, p, eps):
 		if self.degenerate:
@@ -117,12 +117,10 @@ class Arc(PrintableArc):
 		if radius_diff > eps:
 			return False
 
-		angle = vec.angle()
-		while angle > self.theta_end:
-			angle -= 2*np.pi
-		while angle < self.theta_start:
-			angle += 2*np.pi
-		return angle >= self.theta_start and angle <= self.theta_end
+		return same_sign(
+			(self.points[1] - self.points[0]).cross(self.points[2] - self.points[1]),
+			(p - self.points[0]).cross(self.points[2] - p),
+		)
 
 	def __repr__(self):
 		return "Arc(" \
@@ -141,6 +139,9 @@ def colinears(p1, p2, p3):
 def point_on_line(p1, p, p2, eps):
 	height = 2 * area(p1, p2, p) / (p2 - p1).norm()
 	return height < eps
+
+def same_sign(a, b):
+	return (a * b) > 0
 
 def determinant_3x3(x):
 	if x.shape != (3, 3):

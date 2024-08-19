@@ -23,6 +23,8 @@ class Point:
 		return str(self)
 	def angle(self):
 		return np.arctan2(self.y, self.x)
+	def norm_squared(self):
+		return self.dot(self)
 	def norm(self):
 		return np.linalg.norm([self.x, self.y])
 	def cross(self, other):

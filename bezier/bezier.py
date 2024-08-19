@@ -77,6 +77,15 @@ class Bezier(PrintableBezier):
 
 	def test_arc(self, arc, max_t, eps):
 		'''tests whether points up until max_t are not farther away from arc than eps'''
+		if arc.is_more_than_half_circle():
+			return False
+
+		for n in range(1, NB_POINTS_TO_TEST_ARC):
+			t = n * max_t / NB_POINTS_TO_TEST_ARC
+			point = self.sample(t)
+			if not arc.point_on_arc(point, eps):
+				return False
+
 		eps_t = max_t / 1000
 		p = self.sample(eps_t)
 		if not arc.point_on_arc(p, eps):
@@ -84,12 +93,6 @@ class Bezier(PrintableBezier):
 		p = self.sample(max_t-eps_t)
 		if not arc.point_on_arc(p, eps):
 			return False
-
-		for n in range(NB_POINTS_TO_TEST_ARC):
-			t = n * max_t / NB_POINTS_TO_TEST_ARC
-			point = self.sample(t)
-			if not arc.point_on_arc(point, eps):
-				return False
 		return True
 
 	def approximate_beginning_with_arc(self, eps):
@@ -104,7 +107,6 @@ class Bezier(PrintableBezier):
 
 		# early exit
 		if arc_is_good:
-			arc.set_fig(self.f, self.ax)
 			return arc, t
 
 		counter = 0
@@ -124,7 +126,7 @@ class Bezier(PrintableBezier):
 
 			arc = Arc(self.points[0], self.sample(t/2), self.sample(t))
 			arc_is_good = self.test_arc(arc, t, eps)
-			
+		
 		return prev_arc, t-step
 
 	def copy(self):

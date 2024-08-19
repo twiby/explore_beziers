@@ -30,6 +30,7 @@ class BezierCurveApproximation:
 	def __next__(self):
 		if self.t >= 1:
 			raise StopIteration
+			
 		self.counter += 1
 		if self.counter > MAX_NB_ARCS:
 			print("ERROR: MAX NB OF ARCS REACHED")
@@ -169,6 +170,7 @@ def approximate_with_curves(beziers):
 			for arc in all_arcs[n]:
 				arc.printed_line.remove()
 				arc.printed_points.remove()
+				# arc.printed_mid_point.remove()
 			approximator = BezierCurveApproximation(beziers[n], eps)
 			all_arcs[n] = [a for a in approximator]
 			for arc in all_arcs[n]:
@@ -252,6 +254,61 @@ def nb_approximation_vs_scale(beziers, block = True):
 	print(' ' * 20, end='\r')
 	plt.show(block = block)
 
+def test_arc_primitives():
+	fig, axs = plt.subplots(3, 2)
+	axs[0, 0].axis('equal')
+	axs[1, 0].axis('equal')
+	axs[2, 0].axis('equal')
+	axs[0, 1].axis('equal')
+	axs[1, 1].axis('equal')
+	axs[2, 1].axis('equal')
+	arc0 = Arc(Point(1, 1), Point(0.2, 0.5), Point(0, 0))
+	arc1 = Arc(Point(0, 0), Point(1, 1), Point(2, 0))
+	arc2 = Arc(Point(1, 1), Point(4, 0), Point(0, 0))
+
+	arc0_ = Arc(Point(0, 0), Point(0.2, 0.5), Point(1, 1))
+	arc1_ = Arc(Point(2, 0), Point(1, 1), Point(0, 0))
+	arc2_ = Arc(Point(0, 0), Point(4, 0), Point(1, 1))
+
+	arc0.set_fig(fig, axs[0, 0])
+	arc1.set_fig(fig, axs[1, 0])
+	arc2.set_fig(fig, axs[2, 0])
+	arc0_.set_fig(fig, axs[0, 1])
+	arc1_.set_fig(fig, axs[1, 1])
+	arc2_.set_fig(fig, axs[2, 1])
+
+	arc0.print()
+	arc1.print()
+	arc2.print()
+	arc0_.print()
+	arc1_.print()
+	arc2_.print()
+
+	for arc in [arc0, arc1, arc2, arc0_, arc1_, arc2_]:
+		more_than_pi = arc.is_more_than_half_circle()
+		arc.ax.set_title("more then half circle: " + str(more_than_pi))
+
+		v1 = arc.points[0] - arc.center
+		vmid = arc.points[1] - arc.center
+		v2 = arc.points[2] - arc.center
+
+		NB_ANGLES = 200
+		set_current_subplot(arc.f, arc.ax)
+		angles = [t * 2*np.pi / (NB_ANGLES-1) for t in range(NB_ANGLES)]
+		x = [arc.center.x + arc.radius * np.cos(t) for t in angles]
+		y = [arc.center.y + arc.radius * np.sin(t) for t in angles]
+		for xx, yy in zip(x, y):
+			p = Point(xx, yy)
+			if arc.point_on_arc(p, 0.001):
+				color = "green"
+			else:
+				color = "red"
+
+			plt.plot([p.x], [p.y], linestyle="", marker = "+", color=color, alpha = 0.8)
+
+	plt.show()
+
+
 if __name__ == "__main__":
 	beziers = [
 		Bezier(
@@ -286,4 +343,7 @@ if __name__ == "__main__":
 	nb_approximation_vs_precision(beziers, block = False)
 	# nb_approximation_vs_scale(beziers)
 	approximate_with_curves(beziers)
+
+	# test_arc_primitives()
+
 

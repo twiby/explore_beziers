@@ -13,6 +13,7 @@ class PrintableArc:
 		self.ax = ax
 		self.printed_points = None
 		self.printed_line = None
+		self.printed_mid_point = None
 
 	def set_fig(self, f, ax):
 		self.f = f
@@ -48,6 +49,18 @@ class PrintableArc:
 			self.printed_points.set_xdata(x)
 			self.printed_points.set_ydata(y)
 
+		# if self.printed_mid_point is None:
+		# 	self.printed_mid_point, = plt.plot(
+		# 		[self.points[1].x], [self.points[1].y], 
+		# 		marker = "+", 
+		# 		linestyle = "", 
+		# 		color = color,
+		# 		alpha = 0.6
+		# 	)
+		# else:
+		# 	self.printed_mid_point.set_xdata([self.points[1].x])
+		# 	self.printed_mid_point.set_ydata([self.points[1].y])
+
 	def print_curve(self, color = "blue", linestyle = "-", linewidth = 1):
 		set_current_subplot(self.f, self.ax)
 
@@ -56,9 +69,10 @@ class PrintableArc:
 			y = [self.points[0].y, self.points[2].y]
 
 		else:
-			theta_tot = self.theta_end - self.theta_start
-			x = self.center.x + np.array([self.radius * np.cos(self.theta_start + t * theta_tot / (SAMPLING-1)) for t in range(SAMPLING)])
-			y = self.center.y + np.array([self.radius * np.sin(self.theta_start + t * theta_tot / (SAMPLING-1)) for t in range(SAMPLING)])
+			theta_start, theta_end = self.get_angles()
+			theta_tot = theta_end - theta_start
+			x = self.center.x + np.array([self.radius * np.cos(theta_start + t * theta_tot / (SAMPLING-1)) for t in range(SAMPLING)])
+			y = self.center.y + np.array([self.radius * np.sin(theta_start + t * theta_tot / (SAMPLING-1)) for t in range(SAMPLING)])
 
 		if self.printed_line is None:
 			self.printed_line, = plt.plot(
