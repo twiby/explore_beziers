@@ -179,7 +179,7 @@ def approximate_with_curves(beziers):
 
 	plt.show(block = True)
 
-def nb_approximation(beziers, block = True):
+def nb_approximation_vs_precision(beziers, block = True):
 	fig, axs = plt.subplots(2, 2)
 	fig.suptitle("Number of arcs needed to approximate the Beziers curves")
 	axs = axs.flatten()
@@ -215,6 +215,42 @@ def nb_approximation(beziers, block = True):
 	print(' ' * 20, end='\r')
 	plt.show(block = block)
 
+def nb_approximation_vs_scale(beziers, block = True):
+	eps = 1e-4
+	fig, axs = plt.subplots(2, 2)
+	fig.suptitle("Number of arcs needed to approximate the scaled Beziers curves\nPrecision: " + str(eps))
+	axs = axs.flatten()
+
+	log_min_scale = np.log(MIN_SCALE)
+	log_max_scale = np.log(MAX_SCALE)
+	log_x = np.array([log_min_scale + n*(log_max_scale - log_min_scale)/(NB_SCALES-1) for n in range(NB_SCALES)])
+	x = np.exp(log_x)
+
+	for n in range(len(beziers)):
+		set_current_subplot(fig, axs[n])
+
+		y = []
+		for i in range(len(x)):
+			print("BEZIER", n, str(i)+"/"+str(len(x)-1)+"  ", end='\r')
+			y.append(0)
+			for arc in BezierCurveApproximation(beziers[n].scale(x[i]), eps):
+				y[-1] += 1
+		y = np.array(y)
+
+		log_y = np.log(y)
+		poly = np.polynomial.polynomial.Polynomial.fit(log_x, log_y, 1)
+		log_y2 = poly(log_x)
+
+		plt.plot(x, y, label = "nb of arcs")
+		plt.plot(x, np.exp(log_y2), color = "red", alpha = 0.4, label = "fit degree: " + str(abs(poly.coef[1])))
+		plt.xscale("log")
+		plt.yscale("log")
+		plt.ylabel("Number of arcs generated")
+		plt.xlabel("Scaling of the Bezier")
+		plt.legend()
+
+	print(' ' * 20, end='\r')
+	plt.show(block = block)
 
 if __name__ == "__main__":
 	beziers = [
@@ -247,5 +283,7 @@ if __name__ == "__main__":
 	# splitting_interface(beziers)
 	# double_split_interface(beziers)
 
-	nb_approximation(beziers, block = False)
-	approximate_with_curves(beziers)
+	# nb_approximation_vs_precision(beziers, block = False)
+	# approximate_with_curves(beziers)
+
+	nb_approximation_vs_scale(beziers)

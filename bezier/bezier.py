@@ -131,6 +131,9 @@ class Bezier(PrintableBezier):
 	def copy(self):
 		return Bezier(*self.points)
 
+	def scale(self, f):
+		return Bezier(*(p*f for p in self.points))
+
 	def __repr__(self):
 		return "Bezier(" \
 		+ str(self.points[0]) + ", "\
