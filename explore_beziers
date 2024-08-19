@@ -15,29 +15,30 @@ from constants import *
 
 
 class BezierCurveApproximation:
-	def __init__(self, bez):
-		self.original_bezier = bez.copy()
+	def __init__(self, bez, eps):
+		self.original_bezier_reversed = bez.reverse()
 		self.current_bezier = bez.copy()
 		self.t = 0
 		self.arcs = []
+		self.eps = eps
+		self.counter = 0
 
-	def compute(self, eps):
+	def __iter__(self):
 		'''shouldn't be reused after this call, this should be consumed'''
-		counter = 0 
-		while self.t < 1:
-			counter += 1
-			if counter > MAX_NB_ARCS:
-				print("MAX NB OF ARCS REACHED")
-				return self.arcs
-				# raise ValueError("MAX ITERATION REACHED")
+		return self
 
-			arc, t = self.current_bezier.approximate_beginning_with_arc(eps)
-			self.arcs.append(arc)
-			self.t = t + self.t * (1-t)
-			self.current_bezier = Bezier(*self.original_bezier.reverse().get_sub_bez_points(1-self.t)).reverse()
+	def __next__(self):
+		if self.t >= 1:
+			raise StopIteration
+		self.counter += 1
+		if self.counter > MAX_NB_ARCS:
+			print("ERROR: MAX NB OF ARCS REACHED")
+			raise StopIteration
 
-		return self.arcs
-
+		arc, t = self.current_bezier.approximate_beginning_with_arc(self.eps)
+		self.t = t + self.t * (1-t)
+		self.current_bezier = Bezier(*self.original_bezier_reversed.get_sub_bez_points(1-self.t)).reverse()
+		return arc
 
 def splitting_interface(beziers):
 	fig, axs = plt.subplots(2, 2)
@@ -152,8 +153,8 @@ def approximate_with_curves(beziers):
 		beziers[n].set_fig(fig, axs[n])
 		beziers[n].print(linewidth = 1.3)
 
-		approximator = BezierCurveApproximation(beziers[n])
-		arcs = approximator.compute(init_eps)
+		approximator = BezierCurveApproximation(beziers[n], init_eps)
+		arcs = [a for a in approximator]
 		for arc in arcs:
 			arc.set_fig(fig, axs[n])
 			arc.print(linecolor="orange", marker="x", pointcolor="orange")
@@ -168,12 +169,11 @@ def approximate_with_curves(beziers):
 			for arc in all_arcs[n]:
 				arc.printed_line.remove()
 				arc.printed_points.remove()
-			approximator = BezierCurveApproximation(beziers[n])
-			arcs = approximator.compute(eps)
-			for arc in arcs:
+			approximator = BezierCurveApproximation(beziers[n], eps)
+			all_arcs[n] = [a for a in approximator]
+			for arc in all_arcs[n]:
 				arc.set_fig(fig, axs[n])
 				arc.print(linecolor="orange", marker="x", pointcolor="orange")
-			all_arcs[n] = arcs
 		fig.canvas.draw_idle()
 	slider.on_changed(update)
 
@@ -195,7 +195,9 @@ def nb_approximation(beziers, block = True):
 		y = []
 		for i in range(len(x)):
 			print("BEZIER", n, str(i)+"/"+str(len(x)-1)+"  ", end='\r')
-			y.append(len(BezierCurveApproximation(beziers[n]).compute(x[i])))
+			y.append(0)
+			for arc in BezierCurveApproximation(beziers[n], x[i]):
+				y[-1] += 1
 		y = np.array(y)
 
 		log_y = np.log(y)
