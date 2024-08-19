@@ -86,14 +86,27 @@ class Arc(PrintableArc):
 		theta_start = vector_start.angle()
 		theta_mid = vector_mid.angle()
 		theta_end = vector_end.angle()
+
+		# ensure theta_end is above theta_start
 		while theta_end < theta_start:
 			theta_end += 2*np.pi
+		# ensure theta_end is above theta_mid
+		while theta_mid > theta_end:
+			theta_mid -= 2*np.pi
+		# ensure theta_mid is above theta_start
+		while theta_mid < theta_start:
+			theta_mid += 2*np.pi
+		# reverse arc if theta_mid is not between the 2
 		if not (theta_mid >= theta_start and theta_mid <= theta_end):
 			theta_start, theta_end = theta_end, theta_start + 2*np.pi
+
 		assert(theta_end > theta_start)
 		assert(theta_end < theta_start + 2*np.pi)
+		assert(theta_mid > theta_start)
+		assert(theta_mid < theta_end)
 		self.theta_start = theta_start
 		self.theta_end = theta_end
+		self.theta_mid = theta_mid
 
 	def point_on_arc(self, p, eps):
 		if self.degenerate:
