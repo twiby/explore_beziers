@@ -101,7 +101,7 @@ class Bezier(PrintableBezier):
 		t = 1
 		step = 1
 
-		arc = Arc(self.points[0], self.sample(t/2), self.sample(t))
+		arc = Arc(self.points[0], self.sample(t/2), self.sample(t), eps = eps)
 		arc_is_good = self.test_arc(arc, t, eps)
 		prev_arc_is_good = arc_is_good
 
@@ -124,7 +124,7 @@ class Bezier(PrintableBezier):
 			else:
 				t -= step
 
-			arc = Arc(self.points[0], self.sample(t/2), self.sample(t))
+			arc = Arc(self.points[0], self.sample(t/2), self.sample(t), eps = eps)
 			arc_is_good = self.test_arc(arc, t, eps)
 		
 		return prev_arc, t-step

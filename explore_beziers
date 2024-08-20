@@ -340,7 +340,7 @@ if __name__ == "__main__":
 	# splitting_interface(beziers)
 	# double_split_interface(beziers)
 
-	nb_approximation_vs_precision(beziers, block = False)
+	# nb_approximation_vs_precision(beziers, block = False)
 	# nb_approximation_vs_scale(beziers)
 	approximate_with_curves(beziers)
 

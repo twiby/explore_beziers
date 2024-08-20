@@ -8,7 +8,7 @@ from constants import *
 from .printable_arc import PrintableArc
 
 class Arc(PrintableArc):
-	def __init__(self, p0, p1, p2, *args, **kwargs):
+	def __init__(self, p0, p1, p2, *args, eps = 0, **kwargs):
 		if not type(p0) is Point:
 			raise ValueError
 		if not type(p1) is Point:
@@ -18,12 +18,8 @@ class Arc(PrintableArc):
 
 		self.points = [p0, p1, p2]
 		self.degenerate = False
-		self.init()
+		self.init(eps)
 		PrintableArc.__init__(self, *args, **kwargs)
-
-	def set_points(self, p0, p1, p2):
-		self.points = [p0, p1, p2]
-		self.init()
 
 	def chord(self):
 		return (self.points[2] - self.points[0]).norm()
@@ -33,12 +29,17 @@ class Arc(PrintableArc):
 		v2 = self.points[2] - self.points[1]
 		return v1.dot(v2) < 0
 
-	def init(self):
+	def init(self, eps):
 		'''https://web.archive.org/web/20161011113446/http://www.abecedarical.com/zenosamples/zs_circle3pts.html'''
+
+		self.sign = (self.points[1] - self.points[0]).cross(self.points[2] - self.points[1])
+
 		if colinears(self.points[0], self.points[1], self.points[2]):
 			self.degenerate = True
 			self.center = None
 			self.radius = None
+			self.radius_squared_inferior_bound = None
+			self.radius_squared_superior_bound = None
 			return
 
 		m_11 = determinant_3x3_last_column_ones(np.array([
@@ -70,10 +71,17 @@ class Arc(PrintableArc):
 			y = -0.5 * m_13 / m_11
 			self.center = Point(x, y)
 			self.radius = np.sqrt(x**2 + y**2 + m_14/m_11)
+			# inferior radius bound is radius - eps
+			self.radius_squared_inferior_bound = (self.radius - eps) * (self.radius - eps)
+			# inferior radius bound is radius + eps
+			self.radius_squared_superior_bound = (self.radius + eps) * (self.radius + eps)
+
 		except:
 			self.degenerate = True
 			self.center = None
 			self.radius = None
+			self.radius_squared_inferior_bound = None
+			self.radius_squared_superior_bound = None
 
 	def get_angles(self):
 		'''costly, do not use in main loop'''
@@ -113,14 +121,12 @@ class Arc(PrintableArc):
 			return point_on_line(self.points[0], p, self.points[2], eps)
 
 		vec = p - self.center
-		radius_diff = abs(vec.norm() - self.radius)
-		if radius_diff > eps:
-			return False
+		vec_norm_squared = vec.norm_squared()
 
-		return same_sign(
-			(self.points[1] - self.points[0]).cross(self.points[2] - self.points[1]),
-			(p - self.points[0]).cross(self.points[2] - p),
-		)
+		return \
+			vec_norm_squared > self.radius_squared_inferior_bound and\
+			vec_norm_squared < self.radius_squared_superior_bound and\
+			same_sign(self.sign, (p - self.points[0]).cross(self.points[2] - p))
 
 	def __repr__(self):
 		return "Arc(" \
