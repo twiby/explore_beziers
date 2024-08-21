@@ -255,6 +255,8 @@ def nb_approximation_vs_scale(beziers, block = True):
 	plt.show(block = block)
 
 def test_arc_primitives():
+	eps = 0.001
+
 	fig, axs = plt.subplots(3, 2)
 	axs[0, 0].axis('equal')
 	axs[1, 0].axis('equal')
@@ -262,13 +264,13 @@ def test_arc_primitives():
 	axs[0, 1].axis('equal')
 	axs[1, 1].axis('equal')
 	axs[2, 1].axis('equal')
-	arc0 = Arc(Point(1, 1), Point(0.2, 0.5), Point(0, 0))
-	arc1 = Arc(Point(0, 0), Point(1, 1), Point(2, 0))
-	arc2 = Arc(Point(1, 1), Point(4, 0), Point(0, 0))
+	arc0 = Arc(Point(1, 1), Point(0.2, 0.5), Point(0, 0), eps = eps)
+	arc1 = Arc(Point(0, 0), Point(1, 1), Point(2, 0), eps = eps)
+	arc2 = Arc(Point(1, 1), Point(4, 0), Point(0, 0), eps = eps)
 
-	arc0_ = Arc(Point(0, 0), Point(0.2, 0.5), Point(1, 1))
-	arc1_ = Arc(Point(2, 0), Point(1, 1), Point(0, 0))
-	arc2_ = Arc(Point(0, 0), Point(4, 0), Point(1, 1))
+	arc0_ = Arc(Point(0, 0), Point(0.2, 0.5), Point(1, 1), eps = eps)
+	arc1_ = Arc(Point(2, 0), Point(1, 1), Point(0, 0), eps = eps)
+	arc2_ = Arc(Point(0, 0), Point(4, 0), Point(1, 1), eps = eps)
 
 	arc0.set_fig(fig, axs[0, 0])
 	arc1.set_fig(fig, axs[1, 0])

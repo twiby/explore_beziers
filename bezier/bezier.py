@@ -119,10 +119,7 @@ class Bezier(PrintableBezier):
 			prev_arc_is_good = arc_is_good
 			prev_arc = copy.deepcopy(arc)
 
-			if prev_arc_is_good:
-				t += step
-			else:
-				t -= step
+			t += (2 * int(prev_arc_is_good) - 1) * step
 
 			arc = Arc(self.points[0], self.sample(t/2), self.sample(t), eps = eps)
 			arc_is_good = self.test_arc(arc, t, eps)
