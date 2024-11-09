@@ -21,6 +21,9 @@ class Arc(PrintableArc):
 		self.init(eps)
 		PrintableArc.__init__(self, *args, **kwargs)
 
+	def __add__(self, other):
+		return Arc(self.points[0] + other, self.points[1] + other, self.points[2] + other)
+
 	def chord(self):
 		return (self.points[2] - self.points[0]).norm()
 

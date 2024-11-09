@@ -15,6 +15,10 @@ class Point:
 		return Point(self.x * other, self.y * other)
 	def __rmul__(self, other):
 		return self.__mul__(other)
+	def __truediv__(self, other):
+		if type(other) is Point:
+			raise ValueError
+		return Point(self.x / other, self.y / other)		
 	def __neg__(self):
 		return Point(-self.x, -self.y)
 	def __str__(self):
