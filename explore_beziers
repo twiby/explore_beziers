@@ -150,6 +150,7 @@ def approximate_with_curves(beziers):
 	ax_slider = fig.add_axes([0.15, 0.1, 0.75, 0.03])
 	log_init_eps = (np.log(MIN_EPS) + np.log(MAX_EPS)) / 2
 	init_eps = np.exp(log_init_eps)
+	log_init_eps = np.log(init_eps)
 	slider = Slider(
 	    ax = ax_slider,
 	    label = 'log(precision)',
@@ -330,11 +331,17 @@ if __name__ == "__main__":
 			Point(2, 0), 
 		),
 		Bezier(
-			Point(971.6265425573, -170.1314695535), 
-			Point(969.0200408974, -284.5516594574), 
-			Point(868.4482740208, -378.2670267785), 
-			Point(744.5213466629, -381.7539508399), 
+			Point(-200277.80553370155, -59776.063105339184), 
+			Point(-83374.67576732114, 31244.036755215377), 
+			Point(77597.73738691956, 47435.92449296266), 
+			Point(206054.74391410314, -18903.89814283885), 
 		),
+		# Bezier(
+		# 	Point(817971.6265425573, -552170.1314695535), 
+		# 	Point(817969.0200408974, -552284.5516594574), 
+		# 	Point(817868.4482740208, -552378.2670267785), 
+		# 	Point(817744.5213466629, -552381.7539508399), 
+		# ),
 		Bezier(
 			Point(0, 0), 
 			Point(2, 1), 
